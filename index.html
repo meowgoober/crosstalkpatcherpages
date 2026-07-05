@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrossTalk Client Patcher</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0c0c0c; /* PowerShell terminal background */
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        /* Full page PowerShell window without title bar */
+        #ps-window {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            color: #cccccc; /* Light gray text */
+            font-size: 14px;
+            line-height: 1.4;
+            box-sizing: border-box;
+        }
+
+        /* Output Area */
+        #cmd-output {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+        }
+
+        /* PowerShell style line styling */
+        .ps-line {
+            white-space: pre-wrap;
+            margin: 0;
+            padding: 0;
+        }
+
+        .prompt {
+            color: #cccccc;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2em;
+            background-color: #cccccc;
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            from, to { background-color: transparent }
+            50% { background-color: #cccccc }
+        }
+
+        .success {
+            color: #21b344;
+        }
+
+        .separator {
+            white-space: pre;
+            letter-spacing: -0.5px;
+            color: #555;
+        }
+
+        a {
+            color: #6a6aff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div id="ps-window">
+    <div id="cmd-output">
+        <p class="ps-line">Windows PowerShell</p>
+        <p class="ps-line">Copyright (C) Microsoft Corporation. All rights reserved.</p>
+        <br>
+        <p class="ps-line">Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows</p>
+        <br>
+        <p class="ps-line prompt">PS C:\Users\Developer\projects\crosstalkpatcher> <span class="typing-command"></span><span class="cursor"></span></p>
+        
+        <div id="output-sequence"></div>
+        
+        <div id="about-screen" style="display: none;">
+            <p class="ps-line separator">========================================================</p>
+            <p class="ps-line"> CrossTalk Client Patcher (C#)</p>
+            <p class="ps-line"> Automatically patches legacy clients for CrossTalk servers.</p>
+            <p class="ps-line separator">========================================================</p>
+            <p class="ps-line"> Status: Main branch is stable, .net4 (Xp,Vista,7) branch is a WIP
+            <br>
+            <p class="ps-line"> Currently supported patchable clients:</p>
+            <p class="ps-line">  1. MSN Messenger (Binary, Registry, and Reroute/DLL Patches)</p>
+            <p class="ps-line">  2. Yahoo! Messenger (Registry and Reroute/DLL Patches)</p>
+            <br>
+            <p class="ps-line"> *Note on non-public support:</p>
+            <p class="ps-line">  The CrossTalk team is currently working on adding support</p>
+            <p class="ps-line">  for AIM/OSCAR and MySpaceIM. This is not yet public</p>
+            <p class="ps-line">  and has been removed from this patcher build to prevent</p>
+            <p class="ps-line">  issues. Please wait for an updated release.</p>
+            <br>
+            <p class="ps-line separator">========================================================</p>
+            <br>
+            <p class="ps-line"> Links:</p>
+            <p class="ps-line">  - [D] Join the Developer's Discord (meowgoober): <a href="https://discord.gg/dnfGVjJ8r3" target="_blank">https://discord.gg/dnfGVjJ8r3</a></p>
+            <p class="ps-line">  - [C] Join CrossTalk's official Discord server: <a href="https://discord.gg/2bbHHP7TaS" target="_blank">https://discord.gg/2bbHHP7TaS</a></p>
+            <p class="ps-line">  - [W] Visit crosstalk.im:                <a href="https://crosstalk.im" target="_blank">https://crosstalk.im</a></p>
+            <p class="ps-line">  - [G] GitHub Repo for this patcher:       <a href="https://github.com/meowgoober/crosstalkpatcher" target="_blank">https://github.com/meowgoober/crosstalkpatcher</a></p>
+            <p class="ps-line separator">========================================================</p>
+            <br>
+            <p class="ps-line prompt">PS C:\Users\Developer\projects\crosstalkpatcher> <span class="cursor"></span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const outputSeq = document.getElementById('output-sequence');
+    const aboutScreen = document.getElementById('about-screen');
+    const outputContainer = document.getElementById('cmd-output');
+
+    function addLine(text, className = '') {
+        const p = document.createElement('p');
+        p.className = `ps-line ${className}`;
+        p.innerHTML = text;
+        outputSeq.appendChild(p);
+        outputContainer.scrollTop = outputContainer.scrollHeight;
+    }
+
+    async function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function typeCommand(text, speed = 120) {
+        const target = document.querySelector('.typing-command');
+        
+        for (let i = 0; i < text.length; i++) {
+            await sleep(speed);
+            target.textContent += text[i];
+            outputContainer.scrollTop = outputContainer.scrollHeight;
+        }
+        await sleep(400);
+        const promptLine = target.closest('.ps-line');
+        promptLine.querySelector('.cursor').remove();
+        target.classList.remove('typing-command');
+    }
+
+    async function clearTransientAndShowAbout() {
+        await sleep(1000);
+        outputSeq.innerHTML = '';
+        await sleep(500);
+        aboutScreen.style.display = 'block';
+        outputContainer.scrollTop = outputContainer.scrollHeight;
+    }
+
+    async function runSequence() {
+        await sleep(1000);
+
+        // Type the run command
+        await typeCommand('dotnet run');
+        await sleep(400);
+
+        // Build output sequence targeting .NET 10.0
+        await sleep(200); addLine("Determining projects to restore...");
+        await sleep(400); addLine("Restored C:\\Users\\Developer\\projects\\crosstalkpatcher\\crosstalkpatcher.csproj (in 1.4s).");
+        await sleep(300); addLine("crosstalkpatcher -> C:\\Users\\Developer\\projects\\crosstalkpatcher\\bin\\Debug\\net10.0\\crosstalkpatcher.dll");
+        await sleep(600); addLine("<span class='success'>Build succeeded.</span>");
+        await sleep(800); addLine("Running patcher assembly...");
+        await sleep(1200);
+
+        // Clear and swap to the application layout
+        await clearTransientAndShowAbout();
+    }
+
+    runSequence();
+</script>
+
+</body>
+</html>
